@@ -5,7 +5,7 @@ on:
     branches: ["main"]
 
 jobs:
-  EB-Deployment:
+  CFT-with-Route-53-Deployment:
     runs-on: ubuntu-latest
 
     steps:
