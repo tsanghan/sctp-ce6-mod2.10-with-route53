@@ -10,7 +10,7 @@ module "cdn" {
 
   comment             = "Tsang Han's awesome CloudFront with Route 53 - ${local.random.Name}"
   enabled             = true
-  is_ipv6_enabled     = true
+  is_ipv6_enabled     = false
   price_class         = "PriceClass_All"
   retain_on_delete    = false
   wait_for_deployment = false
@@ -33,7 +33,7 @@ module "cdn" {
 
   default_cache_behavior = {
     target_origin_id       = "something"
-    viewer_protocol_policy = "allow-all"
+    viewer_protocol_policy = "redirect-to-https"
 
     allowed_methods = ["GET", "HEAD", "OPTIONS"]
     cached_methods  = ["GET", "HEAD"]
