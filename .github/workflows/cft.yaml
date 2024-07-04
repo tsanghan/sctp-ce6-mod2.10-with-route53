@@ -1,0 +1,42 @@
+name: CloudFront with Route53
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  EB-Deployment:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4.0.2
+      with:
+        aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    - name: Setup Tofu
+      uses: opentofu/setup-opentofu@v1
+      with:
+        tofu_version: 1.7.2
+        tofu_wrapper: false
+
+    - name: Tofu Init
+      run: tofu init
+
+    - name: Tofu fmt
+      run: tofu fmt --recursive
+
+    - name: Tofu Validate
+      run: tofu validate
+
+    - name: Todu Plan
+      run: tofu plan
+
+    - name: Tofu Apply
+      run: tofu apply -auto-approve
+
