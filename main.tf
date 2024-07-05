@@ -42,7 +42,7 @@ module "cdn" {
   }
 
   viewer_certificate = {
-    acm_certificate_arn = "${data.aws_acm_certificate.issued.arn}"
+    acm_certificate_arn = "${module.acm.acm_certificate_arn}"
     ssl_support_method  = "sni-only"
     cloudfront_default_certificate = false
     minimum_protocol_version = "TLSv1.2_2021"
