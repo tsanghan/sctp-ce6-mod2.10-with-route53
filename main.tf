@@ -8,7 +8,7 @@ module "cdn" {
 
   aliases = ["${local.name}-cloudfront.${data.aws_route53_zone.selected.name}"]
 
-  comment             = "Tsang Han's awesome CloudFront with Route 53 & TLS Certificcate- ${local.random.Name}"
+  comment             = "Tsang Han's awesome CloudFront with Route 53 & TLS Certificcate - ${local.random.Name}"
   enabled             = true
   is_ipv6_enabled     = false
   price_class         = "PriceClass_All"
@@ -84,3 +84,31 @@ module "acm" {
 
   tags = local.common_tags
 }
+
+module "s3_bucket" {
+  source = "terraform-aws-modules/s3-bucket/aws"
+  version = "4.1.2"
+
+  bucket = "tsanghan-ce6-cloudfront-${local.random.Name}"
+  acl    = "private"
+
+  control_object_ownership = true
+  object_ownership         = "ObjectWriter"
+
+  versioning = {
+    enabled = false
+  }
+
+  tags = local.common_tags
+}
+
+module "s3-bucket_object" {
+  source  = "terraform-aws-modules/s3-bucket/aws//modules/object"
+  version = "4.1.2"
+
+  bucket = module.s3_bucket.s3_bucket_id
+  key = index.html
+  file_source = "origin/index.html"
+}
+
+
