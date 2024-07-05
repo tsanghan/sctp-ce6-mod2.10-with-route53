@@ -14,14 +14,14 @@ module "cdn" {
   price_class         = "PriceClass_All"
   retain_on_delete    = false
   wait_for_deployment = false
-  default_root_object = "index.html"
+  default_root_object = "home.html"
   tags                = local.common_tags
 
   create_origin_access_identity = false
 
   origin = {
     something = {
-      domain_name = "jaz-cloudfront-demo.s3.ap-southeast-1.amazonaws.com"
+      domain_name = "sctp-staticwebsite-files.s3.ap-southeast-1.amazonaws.com"
       custom_origin_config = {
         http_port              = 80
         https_port             = 443
