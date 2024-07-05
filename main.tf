@@ -6,7 +6,7 @@ module "cdn" {
   source  = "terraform-aws-modules/cloudfront/aws"
   version = "3.4.0"
 
-  aliases = ["${local.random.Name}-${local.name}.${data.aws_route53_zone.selected.name}"]
+  aliases = ["cft-${local.name}.${data.aws_route53_zone.selected.name}"]
 
   comment             = "Tsang Han's awesome CloudFront with Route 53 - ${local.random.Name}"
   enabled             = true
