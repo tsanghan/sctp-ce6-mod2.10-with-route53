@@ -56,14 +56,19 @@ data "aws_route53_zone" "selected" {
 
 resource "aws_route53_record" "tsanghan-ce6" {
   zone_id = data.aws_route53_zone.selected.zone_id
-  name    = "${local.random.Name}-${local.name}.${data.aws_route53_zone.selected.name}"
-  type    = "CNAME"
-  ttl     = "300"
-  records = ["${module.cdn.cloudfront_distribution_domain_name}"]
+  name    = "cft-${local.name}.${data.aws_route53_zone.selected.name}"
+  type    = "A"
+
+  alias {
+    name = "${module.cdn.cloudfront_distribution_domain_name}"
+    zone_id = "${module.cdn.cloudfront_distribution_hosted_zone_id}"
+    evaluate_target_health = false
+  }
+
 }
 
 data "aws_acm_certificate" "issued" {
-  domain   = "sctp-sandbox.com"
+  domain   = "cft-tsanghan-ce6.sctp-sandbox.com"
   statuses = ["ISSUED"]
   most_recent = true
   key_types = ["RSA_2048"]
