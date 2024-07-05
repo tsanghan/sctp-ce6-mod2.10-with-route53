@@ -107,7 +107,7 @@ module "s3-bucket_object" {
   version = "4.1.2"
 
   bucket = module.s3_bucket.s3_bucket_id
-  key = index.html
+  key = "index.html"
   file_source = "origin/index.html"
 }
 
