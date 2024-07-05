@@ -8,13 +8,13 @@ module "cdn" {
 
   aliases = ["${local.name}-cloudfront.${data.aws_route53_zone.selected.name}"]
 
-  comment             = "Tsang Han's awesome CloudFront with Route 53 - ${local.random.Name}"
+  comment             = "Tsang Han's awesome CloudFront with Route 53 & TLS Certificcate- ${local.random.Name}"
   enabled             = true
   is_ipv6_enabled     = false
   price_class         = "PriceClass_All"
   retain_on_delete    = false
   wait_for_deployment = false
-  default_root_object = "home.html"
+  default_root_object = "index.html"
   tags                = local.common_tags
 
   create_origin_access_identity = false
@@ -71,7 +71,7 @@ module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 4.0"
 
-  domain_name  = "${data.aws_route53_zone.selected.name}"
+  domain_name  = "${local.name}-cloudfront.${data.aws_route53_zone.selected.name}"
   zone_id      = "${data.aws_route53_zone.selected.zone_id}"
 
   validation_method = "DNS"
