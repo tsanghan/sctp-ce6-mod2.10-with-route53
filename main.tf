@@ -6,7 +6,7 @@ module "cdn" {
   source  = "terraform-aws-modules/cloudfront/aws"
   version = "3.4.0"
 
-  aliases = ["cft-${local.name}.${data.aws_route53_zone.selected.name}"]
+  aliases = ["${local.name}-cloudfront.${data.aws_route53_zone.selected.name}"]
 
   comment             = "Tsang Han's awesome CloudFront with Route 53 - ${local.random.Name}"
   enabled             = true
@@ -21,7 +21,7 @@ module "cdn" {
 
   origin = {
     something = {
-      domain_name = "sctp-staticwebsite-files.s3.ap-southeast-1.amazonaws.com"
+      domain_name = "jaz-cloudfront-demo.s3.ap-southeast-1.amazonaws.com"
       custom_origin_config = {
         http_port              = 80
         https_port             = 443
@@ -56,7 +56,7 @@ data "aws_route53_zone" "selected" {
 
 resource "aws_route53_record" "tsanghan-ce6" {
   zone_id = data.aws_route53_zone.selected.zone_id
-  name    = "cft-${local.name}.${data.aws_route53_zone.selected.name}"
+  name    = "${local.name}-cloudfront.${data.aws_route53_zone.selected.name}"
   type    = "A"
 
   alias {
@@ -67,9 +67,20 @@ resource "aws_route53_record" "tsanghan-ce6" {
 
 }
 
-data "aws_acm_certificate" "issued" {
-  domain   = "cft-tsanghan-ce6.sctp-sandbox.com"
-  statuses = ["ISSUED"]
-  most_recent = true
-  key_types = ["RSA_2048"]
+module "acm" {
+  source  = "terraform-aws-modules/acm/aws"
+  version = "~> 4.0"
+
+  domain_name  = "${data.aws_route53_zone.selected.name}"
+  zone_id      = "${data.aws_route53_zone.selected.zone_id}"
+
+  validation_method = "DNS"
+
+  subject_alternative_names = [
+    "${local.name}-cloudfront.${data.aws_route53_zone.selected.name}",
+  ]
+
+  wait_for_validation = true
+
+  tags = local.common_tags
 }
