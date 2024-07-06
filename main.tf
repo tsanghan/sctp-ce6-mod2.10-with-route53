@@ -4,23 +4,23 @@ module "cdn" {
 
   aliases = ["${local.name}-cloudfront.${data.aws_route53_zone.selected.name}"]
 
-  comment             = "Tsang Han's awesome CloudFront with Route 53 & TLS Certificcate - ${local.random.Name}"
-  enabled             = true
-  is_ipv6_enabled     = false
-  price_class         = "PriceClass_All"
-  retain_on_delete    = false
-  wait_for_deployment = false
-  default_root_object = "index.html"
+  comment                      = "Tsang Han's awesome CloudFront with Route 53 & TLS Certificcate - ${local.random.Name}"
+  enabled                      = true
+  is_ipv6_enabled              = false
+  price_class                  = "PriceClass_All"
+  retain_on_delete             = false
+  wait_for_deployment          = false
+  default_root_object          = "index.html"
   create_origin_access_control = true
   origin_access_control = {
-    "${module.s3_bucket.s3_bucket_bucket_regional_domain_name}" = {
+    s3_oac = {
       description      = "CloudFront access to S3"
       origin_type      = "s3"
       signing_behavior = "always"
       signing_protocol = "sigv4"
     }
   }
-  tags                = local.common_tags
+  tags = local.common_tags
 
   origin = {
     # something = {
@@ -35,7 +35,7 @@ module "cdn" {
     # }
     something = {
       domain_name           = "${module.s3_bucket.s3_bucket_bucket_regional_domain_name}"
-      origin_access_control = "${module.s3_bucket.s3_bucket_bucket_regional_domain_name}"
+      origin_access_control = "s3_oac"
     }
   }
 
@@ -50,10 +50,10 @@ module "cdn" {
   }
 
   viewer_certificate = {
-    acm_certificate_arn = "${module.acm.acm_certificate_arn}"
-    ssl_support_method  = "sni-only"
+    acm_certificate_arn            = "${module.acm.acm_certificate_arn}"
+    ssl_support_method             = "sni-only"
     cloudfront_default_certificate = false
-    minimum_protocol_version = "TLSv1.2_2021"
+    minimum_protocol_version       = "TLSv1.2_2021"
   }
 
 }
@@ -68,8 +68,8 @@ resource "aws_route53_record" "tsanghan-ce6" {
   type    = "A"
 
   alias {
-    name = "${module.cdn.cloudfront_distribution_domain_name}"
-    zone_id = "${module.cdn.cloudfront_distribution_hosted_zone_id}"
+    name                   = module.cdn.cloudfront_distribution_domain_name
+    zone_id                = module.cdn.cloudfront_distribution_hosted_zone_id
     evaluate_target_health = false
   }
 
@@ -77,9 +77,9 @@ resource "aws_route53_record" "tsanghan-ce6" {
 
 resource "aws_route53_record" "tsanghan-ce6-caa" {
   zone_id = data.aws_route53_zone.selected.zone_id
-  name    = "${data.aws_route53_zone.selected.name}"
+  name    = data.aws_route53_zone.selected.name
   type    = "CAA"
-  ttl = 300
+  ttl     = 300
   records = ["0 issue \"amazon.com\""]
 }
 
@@ -90,8 +90,8 @@ module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 4.0"
 
-  domain_name  = "${local.name}-cloudfront.${data.aws_route53_zone.selected.name}"
-  zone_id      = "${data.aws_route53_zone.selected.zone_id}"
+  domain_name = "${local.name}-cloudfront.${data.aws_route53_zone.selected.name}"
+  zone_id     = data.aws_route53_zone.selected.zone_id
 
   validation_method = "DNS"
 
@@ -122,9 +122,9 @@ data "aws_iam_policy_document" "bucket_policy" {
     ]
 
     condition {
-      test = "StringEquals"
+      test     = "StringEquals"
       variable = "AWS:SourceArn"
-      values = ["${module.cdn.cloudfront_distribution_arn}"]
+      values   = ["${module.cdn.cloudfront_distribution_arn}"]
     }
   }
 
@@ -134,15 +134,15 @@ module "s3_bucket" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "4.1.2"
 
-  bucket = local.bucket_name
-  force_destroy = true
-  attach_policy = true
-  policy        = data.aws_iam_policy_document.bucket_policy.json
+  bucket                  = local.bucket_name
+  force_destroy           = true
+  attach_policy           = true
+  policy                  = data.aws_iam_policy_document.bucket_policy.json
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
-  tags = local.common_tags
+  tags                    = local.common_tags
 
 }
 
