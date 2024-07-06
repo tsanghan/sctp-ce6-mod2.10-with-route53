@@ -1,5 +1,7 @@
 locals {
-  region = "us-east-1"
+  region = "ap-southeast-1"
+
+  bucket_name = "tsanghan-ce6-${local.random.Name}-cloudfront"
 
   name = "tsanghan-ce6"
 
@@ -10,4 +12,8 @@ locals {
   random = {
     Name = "${random_id.server.hex}"
   }
+}
+
+resource "random_id" "server" {
+  byte_length = 4
 }

@@ -1,7 +1,3 @@
-resource "random_id" "server" {
-  byte_length = 4
-}
-
 module "cdn" {
   source  = "terraform-aws-modules/cloudfront/aws"
   version = "3.4.0"
@@ -14,20 +10,32 @@ module "cdn" {
   price_class         = "PriceClass_All"
   retain_on_delete    = false
   wait_for_deployment = false
-  default_root_object = "home.html"
+  default_root_object = "index.html"
+  create_origin_access_control = true
+  origin_access_control = {
+    s3_oac = {
+      description      = "CloudFront access to S3"
+      origin_type      = "s3"
+      signing_behavior = "always"
+      signing_protocol = "sigv4"
+    }
+  }
   tags                = local.common_tags
 
-  create_origin_access_identity = false
-
   origin = {
+    # something = {
+    #   domain_name = "${module.s3_bucket.s3_bucket_bucket_regional_domain_name}"
+    #   origin_access_control = "s3_oac"
+    #   custom_origin_config = {
+    #     http_port              = 80
+    #     https_port             = 443
+    #     origin_protocol_policy = "match-viewer"
+    #     origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
+    #   }
+    # }
     something = {
-      domain_name = "sctp-staticwebsite-files.s3.ap-southeast-1.amazonaws.com"
-      custom_origin_config = {
-        http_port              = 80
-        https_port             = 443
-        origin_protocol_policy = "match-viewer"
-        origin_ssl_protocols   = ["TLSv1.1", "TLSv1.2"]
-      }
+      domain_name           = "${module.s3_bucket.s3_bucket_bucket_regional_domain_name}"
+      origin_access_control = "s3_oac"
     }
   }
 
@@ -68,6 +76,9 @@ resource "aws_route53_record" "tsanghan-ce6" {
 }
 
 module "acm" {
+  providers = {
+    aws = aws.ue1
+  }
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 4.0"
 
@@ -85,30 +96,67 @@ module "acm" {
   tags = local.common_tags
 }
 
-module "s3_bucket" {
-  source = "terraform-aws-modules/s3-bucket/aws"
-  version = "4.1.2"
+data "aws_iam_policy_document" "bucket_policy" {
+  statement {
+    sid = "AllowCloudFrontServicePrincipalReadOnly"
 
-  bucket = "tsanghan-ce6-cloudfront-${local.random.Name}"
-  acl    = "private"
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
 
-  control_object_ownership = true
-  object_ownership         = "ObjectWriter"
+    actions = [
+      "s3:GetObject",
+    ]
 
-  versioning = {
-    enabled = false
+    resources = [
+      "${module.s3_bucket.s3_bucket_arn}/*",
+    ]
+
+    condition {
+      test = "StringEquals"
+      variable = "AWS:SourceArn"
+      values = ["${module.cdn.cloudfront_distribution_arn}"]
+    }
   }
 
+}
+
+module "s3_bucket" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "4.1.2"
+
+  bucket = local.bucket_name
+  force_destroy = true
+  attach_policy = true
+  policy        = data.aws_iam_policy_document.bucket_policy.json
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
   tags = local.common_tags
+
+}
+
+module "template_files" {
+  source   = "hashicorp/dir/template"
+  base_dir = "static-website"
+  template_vars = {
+    # Pass in any values that you wish to use in your templates.
+    vpc_id = "vpc-abc123"
+  }
 }
 
 module "s3-bucket_object" {
   source  = "terraform-aws-modules/s3-bucket/aws//modules/object"
   version = "4.1.2"
 
-  bucket = module.s3_bucket.s3_bucket_id
-  key = "index.html"
-  file_source = "origin/index.html"
+  for_each     = module.template_files.files
+  bucket       = module.s3_bucket.s3_bucket_id
+  key          = each.key
+  file_source  = each.value.source_path
+  content_type = each.value.content_type
+  etag         = each.value.digests.md5
 }
 
 
