@@ -75,7 +75,7 @@ resource "aws_route53_record" "tsanghan-ce6" {
 
 }
 
-resource "aws_route53_record" "tsanghan-ce6" {
+resource "aws_route53_record" "tsanghan-ce6-caa" {
   zone_id = data.aws_route53_zone.selected.zone_id
   name    = "${data.aws_route53_zone.selected.name}"
   type    = "CAA"
