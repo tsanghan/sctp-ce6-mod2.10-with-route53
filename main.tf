@@ -13,7 +13,7 @@ module "cdn" {
   default_root_object = "index.html"
   create_origin_access_control = true
   origin_access_control = {
-    s3_oac = {
+    "${module.s3_bucket.s3_bucket_bucket_regional_domain_name}" = {
       description      = "CloudFront access to S3"
       origin_type      = "s3"
       signing_behavior = "always"
@@ -35,7 +35,7 @@ module "cdn" {
     # }
     something = {
       domain_name           = "${module.s3_bucket.s3_bucket_bucket_regional_domain_name}"
-      origin_access_control = "s3_oac"
+      origin_access_control = "${module.s3_bucket.s3_bucket_bucket_regional_domain_name}"
     }
   }
 
@@ -73,6 +73,14 @@ resource "aws_route53_record" "tsanghan-ce6" {
     evaluate_target_health = false
   }
 
+}
+
+resource "aws_route53_record" "tsanghan-ce6" {
+  zone_id = data.aws_route53_zone.selected.zone_id
+  name    = "${data.aws_route53_zone.selected.name}"
+  type    = "CAA"
+  ttl = 300
+  records = ["0 issue \"amazon.com\""]
 }
 
 module "acm" {
