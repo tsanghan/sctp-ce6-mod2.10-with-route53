@@ -79,7 +79,7 @@ resource "aws_route53_record" "tsanghan-ce6-caa" {
   zone_id = data.aws_route53_zone.selected.zone_id
   name    = data.aws_route53_zone.selected.name
   type    = "CAA"
-  ttl     = 300
+  ttl     = 60
   records = ["0 issue \"amazon.com\""]
 }
 
@@ -166,5 +166,4 @@ module "s3-bucket_object" {
   content_type = each.value.content_type
   etag         = each.value.digests.md5
 }
-
 
