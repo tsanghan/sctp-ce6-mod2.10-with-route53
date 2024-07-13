@@ -47,6 +47,12 @@ module "cdn" {
     cached_methods  = ["GET", "HEAD"]
     compress        = true
     query_string    = true
+
+    function_association = {
+      viewer-response = {
+        function_arn = aws_cloudfront_function.security_headers.arn
+      }
+    }
   }
 
   viewer_certificate = {
@@ -56,6 +62,14 @@ module "cdn" {
     minimum_protocol_version       = "TLSv1.2_2021"
   }
 
+}
+
+resource "aws_cloudfront_function" "security_headers" {
+  name    = "security_headers"
+  runtime = "cloudfront-js-2.0"
+  comment = "add security headers"
+  publish = true
+  code    = file("function/function.js")
 }
 
 data "aws_route53_zone" "selected" {
